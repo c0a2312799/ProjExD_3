@@ -7,6 +7,7 @@ import pygame as pg
 
 WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
+NUM_OF_BOMBS = 5  # 爆弾の個数 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -49,7 +50,6 @@ class Bird:
 
     def __init__(self, xy: tuple[int, int]):
         """
-        __init__は初期設定だよ
         こうかとん画像Surfaceを生成する
         引数 xy：こうかとん画像の初期位置座標タプル
         """
@@ -86,28 +86,28 @@ class Bird:
 
 
 class Beam:
-     """
-     こうかとんが放つビームに関するクラス
-     """
-     def __init__(self, bird:"Bird"):
-         """
-         ビーム画像Surfaceを生成する
-         引数 bird：ビームを放つこうかとん（Birdインスタンス）
-         """
-         self.img = pg.image.load("fig/beam.png")  # ビームSurface
-         self.rct = self.img.get_rect()  # ビームSurfaceのRectを抽出
-         self.rct.centery = bird.rct.centery  # こうかとんの中心縦座標をビームの縦座標
-         self.rct.left = bird.rct.right  # こうかとんの右座標をビームの左座標
-         self.vx, self.vy = +5, 0
+    """
+    こうかとんが放つビームに関するクラス
+    """
+    def __init__(self, bird:"Bird"):
+        """
+        ビーム画像Surfaceを生成する
+        引数 bird：ビームを放つこうかとん（Birdインスタンス）
+        """
+        self.img = pg.image.load("fig/beam.png")  # ビームSurface
+        self.rct = self.img.get_rect()  # ビームSurfaceのRectを抽出
+        self.rct.centery = bird.rct.centery  # こうかとんの中心縦座標をビームの縦座標
+        self.rct.left = bird.rct.right  # こうかとんの右座標をビームの左座標
+        self.vx, self.vy = +5, 0
 
-     def update(self, screen: pg.Surface):
-         """
-         ビームを速度ベクトルself.vx, self.vyに基づき移動させる
-         引数 screen：画面Surface
-         """
-         if check_bound(self.rct) == (True, True):
-             self.rct.move_ip(self.vx, self.vy)
-             screen.blit(self.img, self.rct)    
+    def update(self, screen: pg.Surface):
+        """
+        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        if check_bound(self.rct) == (True, True):
+            self.rct.move_ip(self.vx, self.vy)
+            screen.blit(self.img, self.rct)    
 
 
 class Bomb:
@@ -125,7 +125,7 @@ class Bomb:
         self.img.set_colorkey((0, 0, 0))
         self.rct = self.img.get_rect()
         self.rct.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
-        self.vx, self.vy = +5, +5  # 初期速度
+        self.vx, self.vy = +5, +5
 
     def update(self, screen: pg.Surface):
         """
@@ -147,20 +147,21 @@ def main():
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
     beam = None
-    bomb = Bomb((255, 0, 0), 10)  
+    bomb = Bomb((255, 0, 0), 10)
+    bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
     clock = pg.time.Clock()
     tmr = 0
     while True:
-        for event in pg.event.get():  # event関数はマウスを動かしたり、キーを押したりするときに使うよ
+        for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 # スペースキー押下でBeamクラスのインスタンス生成
-                beam = Beam(bird)            
+                beam = Beam(bird)           
         screen.blit(bg_img, [0, 0])
         
-        if bomb is not None:
-            if bird.rct.colliderect(bomb.rct):  # 画像が重なっているかどうか
+        for bomb in bombs:
+            if bird.rct.colliderect(bomb.rct):
                 # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
                 bird.change_img(8, screen)
                 fonto = pg.font.Font(None, 80)
@@ -170,18 +171,20 @@ def main():
                 time.sleep(5)
                 return
         
-        if beam is not None:
-            if bomb is not None:
-                if beam.rct.colliderect(bomb.rct):  # ビームを爆弾が衝突したら
-                    beam, bomb = None, None
+        for j, bomb in enumerate(bombs):
+            if beam is not None:
+                if beam.rct.colliderect(bomb.rct):  # ビームと爆弾が衝突したら
+                    beam, bombs[j] = None, None
                     bird.change_img(6, screen)
                     pg.display.update()
+                    pg.display.update()              
+        bombs = [bomb for bomb in bombs if bomb is not None]
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
         if beam is not None:
             beam.update(screen) 
-        if bomb is not None:  
+        for bomb in bombs:
             bomb.update(screen)
         pg.display.update()
         tmr += 1
