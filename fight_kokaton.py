@@ -164,6 +164,7 @@ def main():
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
     beams = []  # 複数のビームを扱うためのリスト
+    
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
     score = Score()  # Scoreクラスのインスタンス生成
     clock = pg.time.Clock()
@@ -215,19 +216,12 @@ def main():
         for bomb in bombs:
             bomb.update(screen)
 
-        # スコアの更新
+        # スコアの更新するよ
         score.update(screen)
 
         pg.display.update()
         tmr += 1
         clock.tick(50)
-
-
-if __name__ == "__main__":
-    pg.init()
-    main()
-    pg.quit()
-    sys.exit()
 
 
 if __name__ == "__main__":
